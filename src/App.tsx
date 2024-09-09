@@ -1,11 +1,12 @@
 import {ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from '@mysten/dapp-kit';
 import { Box, Container, Flex, Heading } from "@radix-ui/themes";
 import { WalletStatus } from "./WalletStatus";
-import React, {useEffect, useState} from "react";
+import {useState} from "react";
 import DatePicker from "react-datepicker"; // 引入日期选择器
 import "react-datepicker/dist/react-datepicker.css"; // 引入样式
 import { QueryObject } from "./QueryObject";
 import { Transaction, TransactionObjectArgument } from '@mysten/sui/transactions';
+import capsuleImg from '../src/img/capsule.png'
 
 
 function App() {
@@ -37,12 +38,18 @@ function App() {
   // 处理子组件返回的加密数据
   const handleEncryptedData = (data: string) => {
     setTextData(data);
-    console.log(textData);
-    console.log(selectedDate?.toDateString() + "\n" + "123");
   };
 
   // 处理文件上传
   const handleUpload = async () => {
+    if (!account) {
+      window.alert("Please log in to your wallet first."); // 弹出消息提示
+      return; // 直接返回，停止执行
+    }
+    if (!textData) {
+      window.alert("Please say something."); // 弹出消息提示
+      return; // 直接返回，停止执行
+    }
     setIsLoading(true); // 设置加载状态
     const timestamp = Date.now();
     try {
@@ -56,7 +63,7 @@ function App() {
 
       if (response.ok) {
         const result = await response.json();
-        setUploadStatus("File uploaded successfully!");
+        setUploadStatus("Add capsule successfully!");
         console.log("Upload successful:", result);
         let blobId = "";
         if (result.alreadyCertified) {
@@ -98,50 +105,16 @@ function App() {
           }
         );
       } else {
-        setUploadStatus("File upload failed.");
+        setUploadStatus("Add capsule failed.");
         console.error("Upload failed:", response.statusText);
       }
     } catch (error) {
-      setUploadStatus("Error during file upload.");
+      setUploadStatus("Error during add capsule.");
       console.error("Error uploading file:", error);
     } finally {
       setIsLoading(false); // 无论成功或失败都结束加载状态
     }
   };
-
-  const upload =  (timestamp: number, blodId: string) => {
-    const tx = new Transaction();
-    tx.build()
-    const argument1: TransactionObjectArgument = tx.object(
-      '0xa7927708a2f4d2f4fb30d4fbcef47d494d4c18a74b51417d9578e12d6b7f7331'
-    );
-    const argument2 = tx.pure.u64(timestamp);
-    const argument3 = tx.pure.string(blodId);
-
-    // 构建一个合约调用
-    tx.moveCall({
-      target:
-        '0xa055bf5745c0bcd3dc46602f6f2823ec84514abad9205b93ffe31e5b0dd44e2f::time_capsule::store_time_entry', // 替换为实际的合约函数路径
-      arguments: [argument1, argument2, argument3], // 传递对象参数
-    });
-
-    // 使用 signAndExecuteTransaction 来执行交易
-    signAndExecuteTransaction(
-      {
-        transaction: tx,
-        chain: 'sui:testnet', // 你可以根据需要更改网络，比如 'sui:testnet'
-      },
-      {
-        onSuccess: (result) => {
-          console.log('Executed transaction:', result);
-          console.log('Executed tx:', tx);
-        },
-        onError: (error) => {
-          console.error('Transaction failed:', error);
-        },
-      }
-    );
-  }
 
   return (
     <>
@@ -151,11 +124,27 @@ function App() {
         py="2"
         justify="between"
         style={{
-          borderBottom: "1px solid var(--gray-a2)",
+          borderBottom: "2px solid rgba(0, 0, 0, 0.1)", // Slightly darker bottom border
+          backgroundColor: "#f6f6f6", // Light beige/gray background
+          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Add shadow for depth
         }}
       >
-        <Box>
-          <Heading>Time Capsule</Heading>
+        <Box style={{ display: "flex", alignItems: "center", height: "100%" }}>
+          <img
+            src={capsuleImg}
+            alt="Time Capsule Icon"
+            style={{ width: "50px", height: "auto", marginRight: "10px" }} // Adjust image size and spacing
+          />
+          <Heading
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50px", // Ensure enough height for heading
+            }}
+          >
+            Time Capsule
+          </Heading>
         </Box>
 
         <Box>
@@ -182,16 +171,30 @@ function App() {
           {/* 文件上传功能 */}
           <div style={{ marginTop: "20px" }}>
             <div>
-              <button onClick={handleUpload} disabled={isLoading}>
-                {isLoading ? "Uploading..." : "Upload File"}
+              <button
+                style={{
+                  backgroundColor: '#ff4d4f',   // 设置按钮背景颜色为红色
+                  color: 'white',               // 按钮文字颜色为白色
+                  padding: '8px 16px',          // 内边距控制按钮大小
+                  borderRadius: '4px',          // 设置圆角
+                  border: 'none',               // 去除边框
+                  fontSize: '14px',             // 设置字体大小
+                  fontWeight: 'bold',           // 字体加粗
+                  cursor: 'pointer',            // 鼠标悬停时显示手型
+                }}
+                onClick={handleUpload}
+                disabled={isLoading}
+              >
+                {isLoading ? "Adding..." : "Add Capsule"}
               </button>
+
             </div>
             {/* 显示上传状态 */}
             {uploadStatus && <p>{uploadStatus}</p>}
           </div>
 
           <div>
-            <QueryObject />
+            <QueryObject/>
           </div>
         </Container>
       </Container>

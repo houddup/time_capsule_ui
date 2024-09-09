@@ -1,10 +1,7 @@
-import { useCurrentAccount } from "@mysten/dapp-kit";
-import { Container, Flex, Heading, Text, Box } from "@radix-ui/themes";
-import { OwnedObjects } from "./OwnedObjects";
+import { Container, Flex, Heading, Box } from "@radix-ui/themes";
 import React, { useState } from "react";
 
 export function WalletStatus({ onEncrypt }: { onEncrypt: (data: string) => void }) {
-    const account = useCurrentAccount();
     const [text, setText] = useState<string>(""); // 用于存储输入框中的文本
 
     // 处理输入框内容的变化
@@ -16,7 +13,7 @@ export function WalletStatus({ onEncrypt }: { onEncrypt: (data: string) => void 
 
     return (
       <Container my="2">
-          {account ? (
+
             <Flex direction="column">
                 {/*<Text>Wallet connected</Text>*/}
                 {/*<Text>Address: {account.address}</Text>*/}
@@ -37,15 +34,11 @@ export function WalletStatus({ onEncrypt }: { onEncrypt: (data: string) => void 
                           fontSize: "16px",       // 设置字体大小
                           borderRadius: "8px",    // 添加圆角
                           border: "1px solid #ccc", // 添加边框样式
+                          resize: "vertical",
                       }}
                     />
                 </Box>
             </Flex>
-          ) : (
-            <Text>Wallet not connected</Text>
-          )}
-
-          {/*<OwnedObjects />*/}
       </Container>
     );
 }

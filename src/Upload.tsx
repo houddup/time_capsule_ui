@@ -1,4 +1,4 @@
-import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction, useSuiClientQuery } from '@mysten/dapp-kit';
+import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
 import { Transaction, TransactionObjectArgument } from '@mysten/sui/transactions';
 

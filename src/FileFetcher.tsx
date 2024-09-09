@@ -1,5 +1,5 @@
 // FileFetcher.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 
 const FileFetcher = () => {
   const [fileContent, setFileContent] = useState<string>(""); // 用于存储文件内容

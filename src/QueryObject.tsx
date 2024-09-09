@@ -1,8 +1,9 @@
-import { useCurrentAccount, useSuiClient, useSuiClientQuery } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import type { SuiObjectData } from "@mysten/sui.js/client";
 import { useEffect, useState } from "react";
-import openImg from "../src/img/open.png"
-import closeImg from "../src/img/close.png"
+import { TextModal } from "./TextModal"; // 引入 TextModal 组件
+import openImg from "../src/img/open.png";
+import closeImg from "../src/img/close.png";
 
 export function QueryObject() {
   const [list, setList] = useState<string[]>(['0x0014105f401b34f749de210c3d4bd41a5ae70475c2ac55a7cb2cf88372f07068']);
@@ -10,13 +11,14 @@ export function QueryObject() {
   const client = useSuiClient();
   const [objectDetails, setObjectDetails] = useState<SuiObjectData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBlobId, setSelectedBlobId] = useState<string | null>(null); // 保存选中的 blobId
 
   // 获取用户拥有的对象
   useEffect(() => {
     const getHis = async () => {
       if (account?.address) {
         try {
-          const { data} = await client.getOwnedObjects({ owner: account?.address });
+          const { data } = await client.getOwnedObjects({ owner: account?.address });
           const objList: string[] = data.map((obj) => obj.data.objectId);
           setList(objList);
         } catch (error) {
@@ -33,10 +35,10 @@ export function QueryObject() {
     const fetchDataForObjects = async () => {
       try {
         const fetchedDetails = await Promise.all(
-            list.map(async (id) => {
-              const { data } = await client.getObject({ id, options: { showContent: true } });
-              return data;
-            })
+          list.map(async (id) => {
+            const { data } = await client.getObject({ id, options: { showContent: true } });
+            return data;
+          })
         );
         setObjectDetails(fetchedDetails);
       } catch (error) {
@@ -56,31 +58,39 @@ export function QueryObject() {
     if (objectData.content.type.endsWith('time_capsule::TimeEntry')) {
       const decodedString = objectData?.content?.fields.blobId.map(code => String.fromCharCode(code)).join('');
       const timestamp = Date.now();
+      const isOpen = timestamp >= objectData?.content?.fields.timestamp;
+      let img = isOpen ? openImg : closeImg;
 
-      let img = timestamp < objectData?.content?.fields.timestamp ? closeImg : openImg;
-
-      // 在 openImg 的情况下，允许点击触发操作
-      const isOpen = img === openImg;
       return (
-        <img src={img}
-             alt={decodedString}
-             style={{ width: '100px', height: 'auto', cursor: isOpen ? 'pointer' : 'default' }}
-             onClick={isOpen ? () => handleClick(decodedString) : undefined}
-             title={isOpen ? "Click to open" : "Not time yet"}  // 仅在 openImg 状态下触发点击事件/>
+        <img
+          src={img}
+          alt={decodedString}
+          style={{ width: '100px', height: 'auto', cursor: isOpen ? 'pointer' : 'default' }}
+          onClick={isOpen ? () => handleClick(decodedString) : undefined}
+          title={isOpen ? "Click to open" : "Not time yet"}  // 仅在 openImg 状态下触发点击事件
         />
-      )
+      );
     }
-    return
+    return null;
   };
-  
+
   const renderObjectDataAll = (objectDataList: SuiObjectData[]) => {
     return (
-      <ul style={{display: 'flex', listStyleType: 'none', padding: 0, alignItems: 'flex-end'}}>
+      <ul style={{
+        display: 'flex',
+        flexWrap: 'wrap', // 允许元素自动换行
+        listStyleType: 'none',
+        padding: 0,
+        justifyContent: 'flex-start', // 对齐到左侧
+        alignItems: 'flex-end',
+      }}>
         {objectDataList.map((objectData, index) => {
           const renderedData = renderObjectData(objectData);
-          // 只有当 renderObjectData 返回有效内容时才渲染 <li>
           return renderedData ? (
-            <li key={objectData.objectId || index} style={{margin: '0 20px'}}>
+            <li key={objectData.objectId || index} style={{
+              margin: '10px',
+              width: 'calc(20% - 20px)' // 每行显示 5 个元素，20% 为每个元素的宽度
+            }}>
               {renderedData}
             </li>
           ) : null;
@@ -90,9 +100,13 @@ export function QueryObject() {
   };
 
   // 点击处理函数
-  const handleClick = (decodedString: string) => {
-    console.log("Image clicked:", decodedString);
-    // 这里可以添加点击后的操作逻辑
+  const handleClick = (blobId: string) => {
+    setSelectedBlobId(blobId); // 显示弹出框并传递 blobId
+  };
+
+  // 关闭弹出框的处理函数
+  const handleCloseModal = () => {
+    setSelectedBlobId(null); // 关闭弹出框
   };
 
   // Loading 和 Error 处理
@@ -100,9 +114,12 @@ export function QueryObject() {
   if (!objectDetails.length) return <div>No data found.</div>;
 
   return (
-    <div>
-      <h3>Object Details:</h3>
+    <div style={{ marginTop: '20px' }}>
+      <h3>Capsule Details:</h3>
       {renderObjectDataAll(objectDetails)}
+
+      {/* 显示弹出框 */}
+      {selectedBlobId && <TextModal blobId={selectedBlobId} onClose={handleCloseModal} />}
     </div>
   );
 }
