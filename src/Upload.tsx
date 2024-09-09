@@ -34,7 +34,7 @@ const Upload = () => {
                 const argument1: TransactionObjectArgument = tx.object(
                   '0xa7927708a2f4d2f4fb30d4fbcef47d494d4c18a74b51417d9578e12d6b7f7331'
                 );
-                const argument2 = tx.pure.u64(12132);
+                const argument2 = tx.pure.u64(1726884260000);
                 const argument3 = tx.pure.string('_DUJvv594AgQqY2GAJPYFZ_HB0r96Dni6omp3o6ZclU');
 
                 // 构建一个合约调用

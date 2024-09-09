@@ -16,17 +16,15 @@ export function WalletStatus({ onEncrypt }: { onEncrypt: (data: string) => void 
 
     return (
       <Container my="2">
-          <Heading mb="2">Wallet Status</Heading>
-
           {account ? (
             <Flex direction="column">
-                <Text>Wallet connected</Text>
-                <Text>Address: {account.address}</Text>
+                {/*<Text>Wallet connected</Text>*/}
+                {/*<Text>Address: {account.address}</Text>*/}
 
                 {/* 添加一个大一点的文本输入框 */}
                 <Box mt="4">
                     <label htmlFor="input-textarea">
-                        <Text mb="2">Enter some text to encrypt:</Text>
+                        <Heading mb="2">Say something to you in the future: </Heading>
                     </label>
                     <textarea
                       id="input-textarea"
@@ -47,7 +45,7 @@ export function WalletStatus({ onEncrypt }: { onEncrypt: (data: string) => void 
             <Text>Wallet not connected</Text>
           )}
 
-          <OwnedObjects />
+          {/*<OwnedObjects />*/}
       </Container>
     );
 }

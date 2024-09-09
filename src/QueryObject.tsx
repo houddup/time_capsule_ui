@@ -1,6 +1,8 @@
 import { useCurrentAccount, useSuiClient, useSuiClientQuery } from "@mysten/dapp-kit";
 import type { SuiObjectData } from "@mysten/sui.js/client";
 import { useEffect, useState } from "react";
+import openImg from "../src/img/open.png"
+import closeImg from "../src/img/close.png"
 
 export function QueryObject() {
   const [list, setList] = useState<string[]>(['0x0014105f401b34f749de210c3d4bd41a5ae70475c2ac55a7cb2cf88372f07068']);
@@ -52,20 +54,45 @@ export function QueryObject() {
   // 用于渲染对象信息的辅助函数
   const renderObjectData = (objectData: SuiObjectData) => {
     if (objectData.content.type.endsWith('time_capsule::TimeEntry')) {
-      console.log(objectData.content)
       const decodedString = objectData?.content?.fields.blobId.map(code => String.fromCharCode(code)).join('');
+      const timestamp = Date.now();
 
+      let img = timestamp < objectData?.content?.fields.timestamp ? closeImg : openImg;
+
+      // 在 openImg 的情况下，允许点击触发操作
+      const isOpen = img === openImg;
       return (
-          <li key={objectData.objectId}>
-            Object ID: {objectData.objectId}
-            <br />
-            BlobId: {decodedString}
-            <br />
-            time: {objectData?.content?.fields.timestamp}
-          </li>
-      );
+        <img src={img}
+             alt={decodedString}
+             style={{ width: '100px', height: 'auto', cursor: isOpen ? 'pointer' : 'default' }}
+             onClick={isOpen ? () => handleClick(decodedString) : undefined}
+             title={isOpen ? "Click to open" : "Not time yet"}  // 仅在 openImg 状态下触发点击事件/>
+        />
+      )
     }
     return
+  };
+  
+  const renderObjectDataAll = (objectDataList: SuiObjectData[]) => {
+    return (
+      <ul style={{display: 'flex', listStyleType: 'none', padding: 0, alignItems: 'flex-end'}}>
+        {objectDataList.map((objectData, index) => {
+          const renderedData = renderObjectData(objectData);
+          // 只有当 renderObjectData 返回有效内容时才渲染 <li>
+          return renderedData ? (
+            <li key={objectData.objectId || index} style={{margin: '0 20px'}}>
+              {renderedData}
+            </li>
+          ) : null;
+        })}
+      </ul>
+    );
+  };
+
+  // 点击处理函数
+  const handleClick = (decodedString: string) => {
+    console.log("Image clicked:", decodedString);
+    // 这里可以添加点击后的操作逻辑
   };
 
   // Loading 和 Error 处理
@@ -73,13 +100,9 @@ export function QueryObject() {
   if (!objectDetails.length) return <div>No data found.</div>;
 
   return (
-      <div>
-        <h3>Object Details:</h3>
-        <ul>
-          {objectDetails.map((objectData, index) => (
-              objectData && renderObjectData(objectData)
-          ))}
-        </ul>
-      </div>
+    <div>
+      <h3>Object Details:</h3>
+      {renderObjectDataAll(objectDetails)}
+    </div>
   );
 }

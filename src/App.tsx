@@ -1,19 +1,30 @@
-import {ConnectButton, useCurrentAccount, useSuiClient} from '@mysten/dapp-kit';
+import {ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient} from '@mysten/dapp-kit';
 import { Box, Container, Flex, Heading } from "@radix-ui/themes";
 import { WalletStatus } from "./WalletStatus";
 import React, {useEffect, useState} from "react";
 import DatePicker from "react-datepicker"; // 引入日期选择器
 import "react-datepicker/dist/react-datepicker.css"; // 引入样式
-import FileFetcher from "./FileFetcher";
-import Trans from "./Trans";
-import Upload from "./Upload";
 import { QueryObject } from "./QueryObject";
-
+import { Transaction, TransactionObjectArgument } from '@mysten/sui/transactions';
 
 
 function App() {
   const [uploadStatus, setUploadStatus] = useState<string>(""); // 上传状态
   const [isLoading, setIsLoading] = useState<boolean>(false); // 按钮加载状态
+  const client = useSuiClient();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction({
+    execute: async ({ bytes, signature }) =>
+      await client.executeTransactionBlock({
+        transactionBlock: bytes,
+        signature,
+        options: {
+          // Raw effects are required so the effects can be reported back to the wallet
+          showRawEffects: true,
+          // Select additional data to return
+          showObjectChanges: true,
+        },
+      }),
+  });
 
   // 获取当前日期
   const currentDate = new Date();
@@ -55,6 +66,37 @@ function App() {
           blobId = result.newlyCreated.blobObject.blobId;
         }
         console.log("blobId:", blobId);
+        const tx = new Transaction();
+        tx.build()
+        const argument1: TransactionObjectArgument = tx.object(
+          '0xa7927708a2f4d2f4fb30d4fbcef47d494d4c18a74b51417d9578e12d6b7f7331'
+        );
+        const argument2 = tx.pure.u64(selectedDate?.getTime());
+        const argument3 = tx.pure.string(blobId);
+
+        // 构建一个合约调用
+        tx.moveCall({
+          target:
+            '0xa055bf5745c0bcd3dc46602f6f2823ec84514abad9205b93ffe31e5b0dd44e2f::time_capsule::store_time_entry', // 替换为实际的合约函数路径
+          arguments: [argument1, argument2, argument3], // 传递对象参数
+        });
+
+        // 使用 signAndExecuteTransaction 来执行交易
+        signAndExecuteTransaction(
+          {
+            transaction: tx,
+            chain: 'sui:testnet', // 你可以根据需要更改网络，比如 'sui:testnet'
+          },
+          {
+            onSuccess: (result) => {
+              console.log('Executed transaction:', result);
+              console.log('Executed tx:', tx);
+            },
+            onError: (error) => {
+              console.error('Transaction failed:', error);
+            },
+          }
+        );
       } else {
         setUploadStatus("File upload failed.");
         console.error("Upload failed:", response.statusText);
@@ -66,6 +108,40 @@ function App() {
       setIsLoading(false); // 无论成功或失败都结束加载状态
     }
   };
+
+  const upload =  (timestamp: number, blodId: string) => {
+    const tx = new Transaction();
+    tx.build()
+    const argument1: TransactionObjectArgument = tx.object(
+      '0xa7927708a2f4d2f4fb30d4fbcef47d494d4c18a74b51417d9578e12d6b7f7331'
+    );
+    const argument2 = tx.pure.u64(timestamp);
+    const argument3 = tx.pure.string(blodId);
+
+    // 构建一个合约调用
+    tx.moveCall({
+      target:
+        '0xa055bf5745c0bcd3dc46602f6f2823ec84514abad9205b93ffe31e5b0dd44e2f::time_capsule::store_time_entry', // 替换为实际的合约函数路径
+      arguments: [argument1, argument2, argument3], // 传递对象参数
+    });
+
+    // 使用 signAndExecuteTransaction 来执行交易
+    signAndExecuteTransaction(
+      {
+        transaction: tx,
+        chain: 'sui:testnet', // 你可以根据需要更改网络，比如 'sui:testnet'
+      },
+      {
+        onSuccess: (result) => {
+          console.log('Executed transaction:', result);
+          console.log('Executed tx:', tx);
+        },
+        onError: (error) => {
+          console.error('Transaction failed:', error);
+        },
+      }
+    );
+  }
 
   return (
     <>
@@ -79,7 +155,7 @@ function App() {
         }}
       >
         <Box>
-          <Heading>time capsule</Heading>
+          <Heading>Time Capsule</Heading>
         </Box>
 
         <Box>
@@ -93,13 +169,13 @@ function App() {
 
           {/* 日期选择器 */}
           <div style={{ marginTop: "20px" }}>
-            <h3>Select a Date</h3>
+            <h3>Select a Open Date</h3>
             <DatePicker
               selected={selectedDate}
               onChange={(date) => setSelectedDate(date)} // 更新选择的日期
               minDate={new Date()} // 从今天开始选择
               dateFormat="yyyy-MM-dd" // 设置日期格式
-              placeholderText="Select a date"
+              placeholderText="Select a open date"
             />
           </div>
 
@@ -115,10 +191,6 @@ function App() {
           </div>
 
           <div>
-            <h1>Welcome to the File Fetcher</h1>
-            <FileFetcher /> {/* 使用 FileFetcher 组件 */}
-            <Trans /> {/* 使用 FileFetcher 组件 */}
-            <Upload/>
             <QueryObject />
           </div>
         </Container>
