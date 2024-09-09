@@ -78,6 +78,7 @@ function App() {
         const argument1: TransactionObjectArgument = tx.object(
           '0xa7927708a2f4d2f4fb30d4fbcef47d494d4c18a74b51417d9578e12d6b7f7331'
         );
+        // @ts-ignore
         const argument2 = tx.pure.u64(selectedDate?.getTime());
         const argument3 = tx.pure.string(blobId);
 

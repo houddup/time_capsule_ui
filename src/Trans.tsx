@@ -1,4 +1,4 @@
-import { ConnectButton, useSuiClient, useCurrentAccount, useSignAndExecuteTransaction, useSuiClientQuery } from '@mysten/dapp-kit';
+import { ConnectButton, useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useState } from 'react';
 import { Transaction, TransactionObjectArgument } from '@mysten/sui/transactions';
 
@@ -17,6 +17,7 @@ const Trans = () => {
         },
       }),
   });
+  // @ts-ignore
   const [digest, setDigest] = useState('');
   const currentAccount = useCurrentAccount();
   // 初始化 Sui 客户端，用于获取交易效果

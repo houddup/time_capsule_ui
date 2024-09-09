@@ -6,7 +6,7 @@ import openImg from "../src/img/open.png";
 import closeImg from "../src/img/close.png";
 
 export function QueryObject() {
-  const [list, setList] = useState<string[]>(['0x0014105f401b34f749de210c3d4bd41a5ae70475c2ac55a7cb2cf88372f07068']);
+  const [list, setList] = useState<string[]>([]);
   const account = useCurrentAccount();
   const client = useSuiClient();
   const [objectDetails, setObjectDetails] = useState<SuiObjectData[]>([]);
@@ -19,6 +19,7 @@ export function QueryObject() {
       if (account?.address) {
         try {
           const { data } = await client.getOwnedObjects({ owner: account?.address });
+          // @ts-ignore
           const objList: string[] = data.map((obj) => obj.data.objectId);
           setList(objList);
         } catch (error) {
@@ -40,6 +41,7 @@ export function QueryObject() {
             return data;
           })
         );
+        // @ts-ignore
         setObjectDetails(fetchedDetails);
       } catch (error) {
         console.error("Error fetching object details:", error);
@@ -55,9 +57,12 @@ export function QueryObject() {
 
   // 用于渲染对象信息的辅助函数
   const renderObjectData = (objectData: SuiObjectData) => {
+    // @ts-ignore
     if (objectData.content.type.endsWith('time_capsule::TimeEntry')) {
+      // @ts-ignore
       const decodedString = objectData?.content?.fields.blobId.map(code => String.fromCharCode(code)).join('');
       const timestamp = Date.now();
+      // @ts-ignore
       const isOpen = timestamp >= objectData?.content?.fields.timestamp;
       let img = isOpen ? openImg : closeImg;
 
