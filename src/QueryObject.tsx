@@ -1,68 +1,85 @@
-import {useCurrentAccount, useSuiClient, useSuiClientQuery} from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient, useSuiClientQuery } from "@mysten/dapp-kit";
 import type { SuiObjectData } from "@mysten/sui.js/client";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 export function QueryObject() {
-  // 使用useSuiClientQuery钩子来获取对象的详细信息
   const [list, setList] = useState<string[]>(['0x0014105f401b34f749de210c3d4bd41a5ae70475c2ac55a7cb2cf88372f07068']);
   const account = useCurrentAccount();
-
   const client = useSuiClient();
+  const [objectDetails, setObjectDetails] = useState<SuiObjectData[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // 获取用户拥有的对象
   useEffect(() => {
-    const getHis = () => {
-      client.getOwnedObjects({ owner: account?.address }).then((res) => {
-        const objList: string[] = res.data.map((obj) => obj.data.objectId);
-        setList(objList);
-      });
+    const getHis = async () => {
+      if (account?.address) {
+        try {
+          const { data} = await client.getOwnedObjects({ owner: account?.address });
+          const objList: string[] = data.map((obj) => obj.data.objectId);
+          setList(objList);
+        } catch (error) {
+          console.error("Error fetching owned objects:", error);
+        }
+      }
     };
 
-    getHis()
-    // 清理函数（组件卸载时调用）
-    return () => {
-      console.log('Component unmounted');
-      console.log(list);
+    getHis();
+  }, [account?.address, client]);
+
+  // 获取对象的详细数据
+  useEffect(() => {
+    const fetchDataForObjects = async () => {
+      try {
+        const fetchedDetails = await Promise.all(
+            list.map(async (id) => {
+              const { data } = await client.getObject({ id, options: { showContent: true } });
+              return data;
+            })
+        );
+        setObjectDetails(fetchedDetails);
+      } catch (error) {
+        console.error("Error fetching object details:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, []);
 
-
-  function getData(id: string) {
-    // 使用 useSuiClientQuery 获取数据
-    const { data } = useSuiClientQuery('getObject', {
-      id: id,
-      options: {
-        showContent: true,
-      },
-    });
-    return { data };
-  }
-
+    if (list.length > 0) {
+      fetchDataForObjects();
+    }
+  }, [list, client]);
 
   // 用于渲染对象信息的辅助函数
   const renderObjectData = (objectData: SuiObjectData) => {
-    return Object.entries(objectData).filter(([key, value]) => {
-      if (value) {
-        let type :string = value['data'].content.type;
-        if (type.endsWith('::time_capsule::TimeEntry')) return true
-      }
-      return false
-    }).map(([key, value], index) => (
-      <li key={index}>{`${key}: ${JSON.stringify(value)}`}</li>
-    ));
+    if (objectData.content.type.endsWith('time_capsule::TimeEntry')) {
+      console.log(objectData.content)
+      const decodedString = objectData?.content?.fields.blobId.map(code => String.fromCharCode(code)).join('');
+
+      return (
+          <li key={objectData.objectId}>
+            Object ID: {objectData.objectId}
+            <br />
+            BlobId: {decodedString}
+            <br />
+            time: {objectData?.content?.fields.timestamp}
+          </li>
+      );
+    }
+    return
   };
 
-  // 展示本次交易obeject中的内容。
+  // Loading 和 Error 处理
+  if (loading) return <div>Loading object information...</div>;
+  if (!objectDetails.length) return <div>No data found.</div>;
+
   return (
-    <div>
-      <h3>Object Details:</h3>
-      {list.map((id, index) => (
-        <div key={index}>
-          <h4>Object {index + 1}:</h4>
-          <ul>
-            {renderObjectData(getData(id))}
-          </ul>
-        </div>
-      ))}
-    </div>
+      <div>
+        <h3>Object Details:</h3>
+        <ul>
+          {objectDetails.map((objectData, index) => (
+              objectData && renderObjectData(objectData)
+          ))}
+        </ul>
+      </div>
   );
 }
