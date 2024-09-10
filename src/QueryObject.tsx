@@ -66,17 +66,34 @@ export function QueryObject() {
       const decodedString = objectData?.content?.fields.blobId.map(code => String.fromCharCode(code)).join('');
       const timestamp = Date.now();
       // @ts-ignore
-      const isOpen = timestamp >= objectData?.content?.fields.timestamp;
+      const openTime = objectData?.content?.fields.timestamp;
+      const isOpen = timestamp >= openTime;
       let img = isOpen ? openImg : closeImg;
 
+      // @ts-ignore
+      const openDate = new Date(Number(openTime));
+      const formattedDate = openDate.toLocaleString('en-GB', { // 格式化时间为 yyyy-MM-dd hh:mm:ss
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false, // 使用24小时制
+      }).replace(',', ''); // 去除逗号      console.log(openDate)
       return (
-        <img
-          src={img}
-          alt={decodedString}
-          style={{ width: '100px', height: 'auto', cursor: isOpen ? 'pointer' : 'default' }}
-          onClick={isOpen ? () => handleClick(decodedString) : undefined}
-          title={isOpen ? "Click to open" : "Not time yet"}  // 仅在 openImg 状态下触发点击事件
-        />
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <p style={{ whiteSpace: 'pre-wrap', textAlign: 'center', margin: '0 0 10px 0' }}>
+            {isOpen ? 'You can open now!' : 'Open on:\n' + formattedDate}
+          </p>
+          <img
+            src={img}
+            alt={decodedString}
+            style={{ width: '100px', height: 'auto', cursor: isOpen ? 'pointer' : 'default' }}
+            onClick={isOpen ? () => handleClick(decodedString) : undefined}
+            title={isOpen ? "Click to open" : "Not time yet"}
+          />
+        </div>
       );
     }
     return null;
