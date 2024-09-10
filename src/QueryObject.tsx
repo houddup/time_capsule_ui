@@ -10,7 +10,7 @@ export function QueryObject() {
   const account = useCurrentAccount();
   const client = useSuiClient();
   const [objectDetails, setObjectDetails] = useState<SuiObjectData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedBlobId, setSelectedBlobId] = useState<string | null>(null); // 保存选中的 blobId
 
   // 获取用户拥有的对象
@@ -33,25 +33,28 @@ export function QueryObject() {
 
   // 获取对象的详细数据
   useEffect(() => {
-    const fetchDataForObjects = async () => {
-      try {
-        const fetchedDetails = await Promise.all(
-          list.map(async (id) => {
-            const { data } = await client.getObject({ id, options: { showContent: true } });
-            return data;
-          })
-        );
-        // @ts-ignore
-        setObjectDetails(fetchedDetails);
-      } catch (error) {
-        console.error("Error fetching object details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (account?.address) {
+      setLoading(true);
+      const fetchDataForObjects = async () => {
+        try {
+          const fetchedDetails = await Promise.all(
+            list.map(async (id) => {
+              const { data } = await client.getObject({ id, options: { showContent: true } });
+              return data;
+            })
+          );
+          // @ts-ignore
+          setObjectDetails(fetchedDetails);
+        } catch (error) {
+          console.error("Error fetching object details:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    if (list.length > 0) {
-      fetchDataForObjects();
+      if (list.length > 0) {
+        fetchDataForObjects();
+      }
     }
   }, [list, client]);
 
@@ -116,7 +119,7 @@ export function QueryObject() {
 
   // Loading 和 Error 处理
   if (loading) return <div>Loading object information...</div>;
-  if (!objectDetails.length) return <div>No data found.</div>;
+  if (!objectDetails.length) return <div>No capsule found.</div>;
 
   return (
     <div style={{ marginTop: '20px' }}>
