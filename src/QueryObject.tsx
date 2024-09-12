@@ -31,6 +31,14 @@ export function QueryObject() {
     getHis();
   }, [account?.address, client]);
 
+  // 监控账号变化
+  useEffect(() => {
+    if (!account) {
+      // 如果账号为空，说明用户已退出，刷新页面
+      setObjectDetails([])
+    }
+  }, [account]);
+
   // 获取对象的详细数据
   useEffect(() => {
     if (account?.address) {
